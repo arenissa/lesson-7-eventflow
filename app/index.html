@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFlow — участники события</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Навигация">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">EF</span><span>EventFlow</span></div>
+      <nav aria-label="Разделы">
+        <ul>
+          <li><button type="button" class="nav-item nav-item-active" aria-current="page" data-section="Участники">Участники</button></li>
+          <li><button type="button" class="nav-item" data-section="Мероприятия">Мероприятия</button></li>
+          <li><button type="button" class="nav-item" data-section="Регистрация">Регистрация</button></li>
+          <li><button type="button" class="nav-item" data-section="Билеты">Билеты</button></li>
+          <li><button type="button" class="nav-item" data-section="Отчёты">Отчёты</button></li>
+          <li><button type="button" class="nav-item" data-section="Настройки">Настройки</button></li>
+        </ul>
+      </nav>
+      <div class="help-card">
+        <p class="help-title">Нужна помощь?</p>
+        <p class="help-text">Начните с добавления участника или импорта CSV. Все данные хранятся локально в вашем браузере.</p>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Локальное приложение организатора</p>
+          <h1 id="eventTitle">Практикум «Продукты с ИИ»</h1>
+          <p class="event-meta"><span id="eventVenue">Учебный центр</span> · <span>Вместимость: <span id="eventCapacity">120</span></span></p>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn btn-secondary" id="btnAdd">Добавить участника</button>
+        </div>
+      </header>
+
+      <main id="main">
+        <div id="loading" class="loading" role="status">Загрузка данных…</div>
+
+        <section aria-label="Показатели" class="stats" id="statsSection" hidden>
+          <article class="stat-card"><h2>Всего активных</h2><p class="stat-value" id="statTotal">0</p></article>
+          <article class="stat-card stat-success"><h2>Подтверждены</h2><p class="stat-value" id="statConfirmed">0</p></article>
+          <article class="stat-card stat-success"><h2>Пришли</h2><p class="stat-value" id="statChecked">0</p></article>
+          <article class="stat-card stat-warning"><h2>Лист ожидания</h2><p class="stat-value" id="statWaitlist">0</p></article>
+        </section>
+
+        <section class="toolbar" aria-label="Поиск, фильтры и действия">
+          <div class="toolbar-row">
+            <div class="field search-field">
+              <label for="searchInput">Поиск</label>
+              <input id="searchInput" type="search" placeholder="Поиск по имени, email или компании…" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="statusFilter">Статус</label>
+              <select id="statusFilter">
+                <option value="">Все статусы</option>
+                <option value="new">Новый</option>
+                <option value="confirmed">Подтверждён</option>
+                <option value="waitlist">Лист ожидания</option>
+                <option value="cancelled">Отменён</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ticketFilter">Билет</label>
+              <select id="ticketFilter">
+                <option value="">Все билеты</option>
+                <option value="standard">Стандартный</option>
+                <option value="business">Бизнес</option>
+                <option value="vip">VIP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sortSelect">Сортировка</label>
+              <select id="sortSelect">
+                <option value="name-asc">Имя: А → Я</option>
+                <option value="name-desc">Имя: Я → А</option>
+                <option value="date-desc">Сначала новые</option>
+                <option value="date-asc">Сначала старые</option>
+              </select>
+            </div>
+          </div>
+          <div class="toolbar-row actions-row">
+            <button type="button" class="btn btn-secondary" id="btnImport">Импорт CSV</button>
+            <button type="button" class="btn btn-secondary" id="btnExport">Экспорт JSON</button>
+            <button type="button" class="btn btn-secondary" id="btnRestore">Восстановить копию</button>
+            <input type="file" id="csvFile" class="file-input-hidden" accept=".csv,text/csv,text/plain" tabindex="-1" aria-hidden="true">
+            <input type="file" id="jsonFile" class="file-input-hidden" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+          </div>
+        </section>
+
+        <div class="columns">
+          <section class="table-section" aria-label="Список участников">
+            <div id="emptyStart" class="empty" hidden>
+              <h2>Пока нет участников</h2>
+              <p>Добавьте первого участника вручную или импортируйте файл <code>data/participants.csv</code>. Ошибочные строки не попадут в базу до вашего подтверждения.</p>
+              <div class="empty-actions">
+                <button type="button" class="btn btn-primary" data-action="empty-add">Добавить участника</button>
+                <button type="button" class="btn btn-secondary" data-action="empty-import">Импортировать CSV</button>
+              </div>
+            </div>
+            <div id="emptySearch" class="empty" hidden>
+              <h2>Ничего не найдено</h2>
+              <p>Попробуйте изменить запрос или сбросить фильтры.</p>
+              <button type="button" class="btn btn-secondary" id="btnResetFilters">Сбросить поиск и фильтры</button>
+            </div>
+            <div class="table-wrap" id="tableWrap" hidden>
+              <table id="participantsTable">
+                <caption class="visually-hidden">Участники события</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Участник</th>
+                    <th scope="col">Билет</th>
+                    <th scope="col">Статус</th>
+                    <th scope="col">Регистрация</th>
+                    <th scope="col">Чек-ин</th>
+                    <th scope="col"><span class="visually-hidden">Действия</span></th>
+                  </tr>
+                </thead>
+                <tbody id="participantsBody"></tbody>
+              </table>
+            </div>
+            <p id="tableError" class="form-error" role="alert" hidden></p>
+          </section>
+
+          <aside class="activity" aria-label="Журнал действий">
+            <h2>Активность</h2>
+            <ul id="activityList" class="activity-list"></ul>
+            <p id="activityEmpty" class="muted">Действий пока нет.</p>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="participantDialog" aria-labelledby="participantDialogTitle">
+    <form id="participantForm" method="dialog" novalidate>
+      <h2 id="participantDialogTitle">Новый участник</h2>
+      <p class="muted" id="participantModeHint">Поля со звёздочкой обязательны.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="fName">Имя *</label>
+          <input id="fName" name="name" type="text" required autocomplete="off">
+          <p class="field-error" id="errName" hidden></p>
+        </div>
+        <div class="field">
+          <label for="fEmail">Email *</label>
+          <input id="fEmail" name="email" type="email" required autocomplete="off">
+          <p class="field-error" id="errEmail" hidden></p>
+        </div>
+        <div class="field">
+          <label for="fCompany">Компания</label>
+          <input id="fCompany" name="company" type="text" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fTicket">Тип билета *</label>
+          <select id="fTicket" name="ticket">
+            <option value="standard">Стандартный</option>
+            <option value="business">Бизнес</option>
+            <option value="vip">VIP</option>
+          </select>
+          <p class="field-error" id="errTicket" hidden></p>
+        </div>
+        <div class="field">
+          <label for="fStatus">Статус *</label>
+          <select id="fStatus" name="status">
+            <option value="new">Новый</option>
+            <option value="confirmed">Подтверждён</option>
+            <option value="waitlist">Лист ожидания</option>
+            <option value="cancelled">Отменён</option>
+          </select>
+          <p class="field-error" id="errStatus" hidden></p>
+        </div>
+        <div class="field checkbox-field">
+          <input id="fChecked" name="checkedIn" type="checkbox">
+          <label for="fChecked">Отметить прибытие (только для подтверждённых)</label>
+          <p class="field-error" id="errChecked" hidden></p>
+        </div>
+      </div>
+      <div id="viewOnlyBox" class="view-box" hidden></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="btnCancelDialog">Отмена</button>
+        <button type="button" class="btn btn-secondary" id="btnEditFromView" hidden>Редактировать</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="csvDialog" aria-labelledby="csvDialogTitle">
+    <div class="dialog-body">
+      <h2 id="csvDialogTitle">Предпросмотр импорта CSV</h2>
+      <p class="muted" id="csvSummary">Файл не выбран.</p>
+      <div id="csvErrors" class="csv-errors"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="btnCsvCancel">Отмена</button>
+        <button type="button" class="btn btn-primary" id="btnCsvConfirm">Импортировать корректные</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="restoreDialog" aria-labelledby="restoreDialogTitle">
+    <div class="dialog-body">
+      <h2 id="restoreDialogTitle">Восстановление копии</h2>
+      <p id="restoreSummary" class="muted">Файл не проверен.</p>
+      <p class="warning-box">Внимание: текущие данные будут заменены содержимым файла. Действие выполняется только после подтверждения.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="btnRestoreCancel">Отмена</button>
+        <button type="button" class="btn btn-primary" id="btnRestoreConfirm">Заменить данные</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="./db.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
